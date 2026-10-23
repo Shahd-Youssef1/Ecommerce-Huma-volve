@@ -1,94 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme.dart';
+import '../cubit/home_cubit.dart';
 import '../widgets/product_card.dart';
 import '../widgets/category_chip.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _selectedCategoryIndex = 0;
-  bool isLoading = true;
-  String? errorMessage;
-  List products = [];
-  List categories = [];
-
-  @override
-  void initState() {
-    super.initState();
-    fetchHomeData();
-  }
-
-  // دالة لجلب البيانات من الـ API باستخدام Dio وإدارة الحالة
-  Future<void> fetchHomeData() async {
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
-
-    try {
-      final dio = Dio();
-
-      // جلب الأقسام والمنتجات من الـ API بالتوازي
-      final categoriesResponse = await dio.get(
-        'https://api.escuelajs.co/api/v1/categories',
-      );
-      final productsResponse = await dio.get(
-        'https://api.escuelajs.co/api/v1/products',
-      );
-
-      setState(() {
-        categories = categoriesResponse.data;
-        products = productsResponse.data;
-        isLoading = false;
-      });
-    } on DioException catch (e) {
-      setState(() {
-        isLoading = false;
-        errorMessage = e.message ?? 'فشل الاتصال بالخادم';
-      });
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-        errorMessage = e.toString();
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: isLoading
-            ? const Center(
+        child: BlocBuilder<HomeCubit, HomeState>(
+          builder: (context, state) {
+            if (state is HomeLoading) {
+              return const Center(
                 child: CircularProgressIndicator(color: AppTheme.primary),
-              )
-            : errorMessage != null
-            ? Center(
+              );
+            } else if (state is HomeFailure) {
+              return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      errorMessage!,
+                      state.message,
                       style: const TextStyle(color: Colors.red),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: fetchHomeData,
+                      onPressed: () {
+                        context.read<HomeCubit>().getProducts();
+                      },
                       child: const Text('Retry'),
                     ),
                   ],
                 ),
-              )
-            : CustomScrollView(
+              );
+            } else if (state is HomeSuccess) {
+              final products = state.products;
+
+              return CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(
                     child: Padding(
@@ -180,23 +135,19 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           const SizedBox(height: 32),
+                          // Categories list (يمكنك ربطها بـ CategoryCubit لاحقاً لو رغبتِ)
                           SizedBox(
                             height: 44,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
-                              itemCount: categories.length,
+                              itemCount: 3, // مثال مؤقت للأقسام
                               separatorBuilder: (context, index) =>
                                   const SizedBox(width: 12),
                               itemBuilder: (context, index) {
-                                final category = categories[index];
                                 return CategoryChip(
-                                  label: category['name'] ?? '',
-                                  isSelected: _selectedCategoryIndex == index,
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedCategoryIndex = index;
-                                    });
-                                  },
+                                  label: 'Category ${index + 1}',
+                                  isSelected: index == 0,
+                                  onTap: () {},
                                 );
                               },
                             ),
@@ -217,13 +168,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final product = products[index];
+                        // بما أن ProductCard يتوقع ProductEntity الآن:
                         return ProductCard(product: product);
                       }, childCount: products.length),
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 24)),
                 ],
-              ),
+              );
+            }
+            return const SizedBox();
+          },
+        ),
       ),
     );
   }
