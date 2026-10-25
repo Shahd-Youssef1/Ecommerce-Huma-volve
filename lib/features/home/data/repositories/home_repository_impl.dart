@@ -8,8 +8,14 @@ class HomeRepositoryImpl implements HomeRepository {
   HomeRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<List<ProductEntity>> getProducts() async {
-    final productModels = await remoteDataSource.getProducts();
-    return productModels;
+  Future<List<ProductEntity>> getProducts({
+    required int offset,
+    required int limit,
+  }) async {
+    final remoteProducts = await remoteDataSource.getProducts(
+      offset: offset,
+      limit: limit,
+    );
+    return remoteProducts; // بما أن الـ Model يورث أو يحول إلى Entity
   }
 }

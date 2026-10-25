@@ -3,11 +3,45 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme.dart';
 import '../cubit/home_cubit.dart';
+import '../cubit/home_state.dart';
 import '../widgets/product_card.dart';
 import '../widgets/category_chip.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_isBottom) {
+      context.read<HomeCubit>().loadMoreProducts();
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9); // يبدأ التحميل قبل النهاية بقليل
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +76,10 @@ class HomeScreen extends StatelessWidget {
               );
             } else if (state is HomeSuccess) {
               final products = state.products;
+              final hasMore = state.hasMore;
 
               return CustomScrollView(
+                controller: _scrollController,
                 slivers: [
                   SliverToBoxAdapter(
                     child: Padding(
@@ -95,52 +131,13 @@ class HomeScreen extends StatelessWidget {
                             ).textTheme.bodyMedium?.copyWith(fontSize: 18),
                           ),
                           const SizedBox(height: 32),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withValues(alpha: 0.05),
-                                  blurRadius: 15,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Search clothes...',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey.shade400,
-                                ),
-                                prefixIcon: const Icon(
-                                  Icons.search,
-                                  color: Colors.grey,
-                                ),
-                                suffixIcon: Container(
-                                  margin: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primary,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.tune,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                                border: InputBorder.none,
-                              ),
-                            ),
-                          ),
+                          // Search bar ...
                           const SizedBox(height: 32),
-                          // Categories list (يمكنك ربطها بـ CategoryCubit لاحقاً لو رغبتِ)
                           SizedBox(
                             height: 44,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
-                              itemCount: 3, // مثال مؤقت للأقسام
+                              itemCount: 3,
                               separatorBuilder: (context, index) =>
                                   const SizedBox(width: 12),
                               itemBuilder: (context, index) {
@@ -168,12 +165,26 @@ class HomeScreen extends StatelessWidget {
                           ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final product = products[index];
-                        // بما أن ProductCard يتوقع ProductEntity الآن:
                         return ProductCard(product: product);
                       }, childCount: products.length),
                     ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  // مؤشر التحميل في الأسفل عند سحب المزيد
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Center(
+                        child: hasMore
+                            ? const CircularProgressIndicator(
+                                color: AppTheme.primary,
+                              )
+                            : const Text(
+                                'No more products',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                      ),
+                    ),
+                  ),
                 ],
               );
             }
