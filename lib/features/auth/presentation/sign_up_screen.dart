@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
-import '../../../../core/widgets/custom_text_field.dart';
-import '../../../../core/widgets/primary_button.dart';
-import '../../../../core/theme.dart';
-import '../../login/screens/login_screen.dart';
+import '../../../core/widgets/custom_text_field.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../../../core/theme.dart';
+import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -199,10 +199,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 }import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
-import '../../../../core/widgets/custom_text_field.dart';
-import '../../../../core/widgets/primary_button.dart';
-import '../../../../core/theme.dart';
-import '../../login/screens/login_screen.dart';
+import '../../../core/widgets/custom_text_field.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../../../core/theme.dart';
+import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});

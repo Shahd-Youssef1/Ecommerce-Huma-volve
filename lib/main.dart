@@ -11,6 +11,8 @@ import 'features/home/data/repositories/home_repository_impl.dart';
 import 'features/home/domain/usecases/get_products_usecase.dart';
 import 'features/home/presentation/cubit/home_cubit.dart';
 import 'features/splash/screens/splash_screen.dart';
+// استيراد شاشة تفاصيل المنتج (عدلي المسار حسب مكان الملف عندك لو مختلف)
+import 'features/home/presentation/screens/product_details_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -45,6 +47,16 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         home: const SplashScreen(),
+        // إعداد الـ Routes للتحكم في الـ Deep Linking والتنقل لشاشة التفاصيل
+        onGenerateRoute: (settings) {
+          if (settings.name == '/product-details') {
+            final productId = settings.arguments as String? ?? '1';
+            return MaterialPageRoute(
+              builder: (context) => ProductDetailsScreen(productId: productId),
+            );
+          }
+          return null;
+        },
       ),
     );
   }

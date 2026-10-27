@@ -165,7 +165,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final product = products[index];
-                        return ProductCard(product: product);
+                        return InkWell(
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/product-details',
+                              arguments: product.id.toString(),
+                            );
+                          },
+                          child: ProductCard(product: product),
+                        );
                       }, childCount: products.length),
                     ),
                   ),
